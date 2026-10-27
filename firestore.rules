@@ -1,0 +1,101 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidHabit(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 100 &&
+             (!('description' in data) || data.description == null || (data.description is string && data.description.size() <= 500)) &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 50 &&
+             data.iconName is string && data.iconName.size() >= 1 && data.iconName.size() <= 50 &&
+             data.colorHex is string && data.colorHex.size() >= 4 && data.colorHex.size() <= 10 &&
+             data.frequency is string && (data.frequency in ['daily', 'weekdays', 'weekends', 'custom']) &&
+             data.targetDaysPerWeek is int && data.targetDaysPerWeek >= 1 && data.targetDaysPerWeek <= 7 &&
+             data.targetValue is int && data.targetValue >= 1 && data.targetValue <= 100000 &&
+             data.unit is string && data.unit.size() >= 1 && data.unit.size() <= 30 &&
+             data.isArchived is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    function isValidLog(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.habitId is string && data.habitId.size() >= 1 && data.habitId.size() <= 128 &&
+             data.date is string && data.date.size() == 10 && data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') &&
+             data.value is int && data.value >= 0 && data.value <= 100000 &&
+             data.completed is bool &&
+             (!('notes' in data) || data.notes == null || (data.notes is string && data.notes.size() <= 500)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time;
+    }
+
+    match /users/{userId}/habits/{habitId} {
+      allow get: if isSignedIn() && request.auth.uid == userId && isValidId(habitId);
+      allow list: if isSignedIn() && request.auth.uid == userId;
+
+      allow create: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isValidId(habitId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll(['userId', 'title', 'category', 'iconName', 'colorHex', 'frequency', 'targetDaysPerWeek', 'targetValue', 'unit', 'isArchived', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'title', 'description', 'category', 'iconName', 'colorHex', 'frequency', 'targetDaysPerWeek', 'targetValue', 'unit', 'isArchived', 'createdAt', 'updatedAt']) &&
+                       isValidHabit(incoming());
+
+      allow update: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isValidId(habitId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidHabit(incoming()) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['title', 'description', 'category', 'iconName', 'colorHex', 'frequency', 'targetDaysPerWeek', 'targetValue', 'unit', 'isArchived', 'updatedAt']);
+
+      allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(habitId);
+    }
+
+    match /users/{userId}/logs/{logId} {
+      allow get: if isSignedIn() && request.auth.uid == userId && isValidId(logId);
+      allow list: if isSignedIn() && request.auth.uid == userId;
+
+      allow create: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isValidId(logId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll(['userId', 'habitId', 'date', 'value', 'completed', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'habitId', 'date', 'value', 'completed', 'notes', 'createdAt', 'updatedAt']) &&
+                       isValidLog(incoming());
+
+      allow update: if isSignedIn() &&
+                       request.auth.uid == userId &&
+                       isValidId(logId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().habitId == existing().habitId &&
+                       incoming().date == existing().date &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidLog(incoming()) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['value', 'completed', 'notes', 'updatedAt']);
+
+      allow delete: if isSignedIn() && request.auth.uid == userId && isValidId(logId);
+    }
+  }
+}

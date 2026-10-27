@@ -1,0 +1,6 @@
+{
+  "name": "HabitPulse",
+  "description": "Minimalist habit tracker with visual streaks, smart habit templates, and progress analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

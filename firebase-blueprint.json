@@ -1,0 +1,143 @@
+{
+  "entities": {
+    "Habit": {
+      "title": "Habit",
+      "description": "A user-defined habit to track over time with frequency and targets",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner user UID"
+        },
+        "title": {
+          "type": "string",
+          "description": "Name or title of the habit"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional notes or motivation for the habit"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category such as health, mindfulness, focus, fitness"
+        },
+        "iconName": {
+          "type": "string",
+          "description": "Visual icon identifier"
+        },
+        "colorHex": {
+          "type": "string",
+          "description": "Hex color for visualization"
+        },
+        "frequency": {
+          "type": "string",
+          "description": "Repetition schedule: daily, weekdays, weekends"
+        },
+        "targetDaysPerWeek": {
+          "type": "integer",
+          "description": "Target days per week from 1 to 7"
+        },
+        "targetValue": {
+          "type": "integer",
+          "description": "Target value to achieve (e.g. 1 for simple completion, or numeric target)"
+        },
+        "unit": {
+          "type": "string",
+          "description": "Measurement unit (times, pages, mins, ml)"
+        },
+        "isArchived": {
+          "type": "boolean",
+          "description": "Whether this habit is archived"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when habit was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when habit was last modified"
+        }
+      },
+      "required": [
+        "userId",
+        "title",
+        "category",
+        "iconName",
+        "colorHex",
+        "frequency",
+        "targetDaysPerWeek",
+        "targetValue",
+        "unit",
+        "isArchived",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "HabitLog": {
+      "title": "HabitLog",
+      "description": "A single day's log entry or completion for a habit",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner user UID"
+        },
+        "habitId": {
+          "type": "string",
+          "description": "Referenced habit document ID"
+        },
+        "date": {
+          "type": "string",
+          "description": "ISO format date string YYYY-MM-DD"
+        },
+        "value": {
+          "type": "integer",
+          "description": "Progress value reached on this day"
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Whether the habit was marked completed"
+        },
+        "notes": {
+          "type": "string",
+          "description": "Optional notes or reflections for the day"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when log was created"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when log was last modified"
+        }
+      },
+      "required": [
+        "userId",
+        "habitId",
+        "date",
+        "value",
+        "completed",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/habits/{habitId}": {
+      "schema": {
+        "$ref": "#/entities/Habit"
+      },
+      "description": "Collection of habits owned by the user"
+    },
+    "/users/{userId}/logs/{logId}": {
+      "schema": {
+        "$ref": "#/entities/HabitLog"
+      },
+      "description": "Collection of daily logs owned by the user"
+    }
+  }
+}
